@@ -1,9 +1,10 @@
 import pymysql
 from flask import Flask, request, redirect, url_for, render_template, abort, make_response
+from config import config
 
 class BandsawFrontend:
     def __init__(self):
-        self.db = pymysql.connect("127.0.0.1", "", "", "")
+        self.db = pymysql.connect(config['db-server'], config['db-username'], config['db-password'], config['db-database'])
 
         self.app = Flask(__name__, static_url_path='/static')
 

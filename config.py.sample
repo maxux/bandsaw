@@ -1,0 +1,9 @@
+# bandsaw configuration
+config = {
+    # database credentials
+    'db-server': '127.0.0.1',
+    'db-username': '',
+    'db-password': '',
+    'db-database': 'bandsaw',
+
+}

@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+
+{% block jumbo %}
+<h1 class="display-3">Les artistes</h1>
+<p>
+  Actuellement <strong>{{ length }}</strong> artistes dans notre base de données.
+</p>
+{% endblock %}
+
+{% block content %}
+<ul>
+{% for artist in artists %}
+<li>
+    <a href="/artist/{{ artist['aid'] }}/{{ artist['prettyname'] }}">
+        {{ artist['name'] }}
+    </a>
+</li>
+{% endfor %}
+{% endblock %}

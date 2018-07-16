@@ -1,0 +1,47 @@
+{% extends "layout.html" %}
+
+{% block jumbo %}
+<img class="rounded-circle float-left profile-picture" src="https://i.imgur.com/19GhSpO.jpg" alt="Profile Picture" width="140" height="140">
+
+<h1 class="display-3">Maxime Daniel</h1>
+<p>
+  Maxime a participé à <strong>{{ stats['events'] }}</strong> évenements et
+  a vu <strong>{{ stats['artists'] }}</strong> artistes.
+  <br>
+  [Coming soon]
+</p>
+{% endblock %}
+
+{% block content %}
+<h2 class="date-separator">2018</h2>
+
+{% for event in evlist %}
+<h1>
+  {{ event['name'] }}
+  <small class="small-text text-info">{{ event['type'] }}, {{ event['location'] }}</small>
+</h1>
+
+<table class="table table-hover">
+  {% for show in event['shows'] %}
+  <tr>
+    <td class="show-table-artist">
+    {{ show['artist'] }}
+    {% if show['type'] %}
+    <code>[{{ show['type'] }}]</code>
+    {% endif %}
+    </td>
+
+    <td class="show-table-stage">
+    {{ show['location'] }}
+    </td>
+
+    <td class="show-table-time">
+    {{ show['start'] }} - {{ show['end'] }}
+    </td>
+  </tr>
+{% endfor %}
+</table>
+{% endfor %}
+
+<hr>
+{% endblock %}

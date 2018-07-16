@@ -9,8 +9,8 @@ class BandsawFrontend:
         self.app = Flask(__name__, static_url_path='/static')
 
     def register(self):
-        @self.app.route('/', methods=['GET'])
-        def homepage():
+        @self.app.route('/users/<uid>/<name>', methods=['GET'])
+        def user(uid, name):
             cursor = self.db.cursor()
 
             cursor.execute("""
@@ -59,7 +59,77 @@ class BandsawFrontend:
             contents['stats']['artists'] = len(artists)
             self.db.commit()
 
-            return render_template("homepage.html", **contents)
+            return render_template("user.html", **contents)
+
+        @self.app.route('/', methods=['GET'])
+        def homepage():
+
+            return render_template("homepage.html")
+
+        @self.app.route('/users', methods=['GET'])
+        def users():
+            cursor = self.db.cursor()
+            cursor.execute("""SELECT id, username, realname FROM users""")
+            users = []
+
+            data = cursor.fetchall()
+            for row in data:
+                users.append({
+                    'uid': row[0],
+                    'username': row[1],
+                    'realname': row[2],
+                })
+
+            length = len(users)
+
+            return render_template("users.html", users=users, length=length)
+
+        @self.app.route('/artists', methods=['GET'])
+        def artists():
+            cursor = self.db.cursor()
+            cursor.execute("""SELECT id, name FROM artists ORDER BY name""")
+            artists = []
+
+            data = cursor.fetchall()
+            for row in data:
+                artists.append({
+                    'aid': row[0],
+                    'name': row[1],
+                    'prettyname': "xxxx",
+                })
+
+            length = len(artists)
+
+            return render_template("artists.html", artists=artists, length=length)
+
+        @self.app.route('/events', methods=['GET'])
+        def events():
+            cursor = self.db.cursor()
+            cursor.execute("""
+                SELECT e.id, e.name, t.name, datein, dateout, location
+                FROM events e
+                LEFT JOIN event_types t ON (t.id = e.type)
+                ORDER BY datein
+            """)
+            events = []
+
+            data = cursor.fetchall()
+            for row in data:
+                events.append({
+                    'eid': row[0],
+                    'name': row[1],
+                    'type': row[2],
+                    'start': row[3],
+                    'end': row[4],
+                    'location': row[5],
+                    'prettyname': 'xxxx',
+                })
+
+            length = len(events)
+
+            return render_template("events.html", events=events, length=length)
+
+
 
     def start(self):
         self.app.run(host="0.0.0.0", port=8001, debug=True, threaded=True)

@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+
+{% block jumbo %}
+<h1 class="display-3">Les évenements</h1>
+<p>
+  Actuellement <strong>{{ length }}</strong> évenements dans notre base de données.
+</p>
+{% endblock %}
+
+{% block content %}
+<table class="table">
+  <thead>
+      <th>Evenement</th>
+      <th>Type</th>
+      <th>Emplacement</th>
+      <th>Date</th>
+  </thead>
+  <tbody>
+{% for event in events %}
+    <tr>
+      <td>
+        <a href="/event/{{ event['eid'] }}/{{ event['prettyname'] }}">
+          {{ event['name'] }}
+        </a>
+      </td>
+      <td>
+          {{ event['type'] }}
+      </td>
+      <td>
+          {{ event['location'] }}
+      </td>
+      <td>
+          {{ event['start'] }} - {{ event['end'] }}
+      </td>
+    </tr>
+{% endfor %}
+  </tbody>
+</table>
+{% endblock %}

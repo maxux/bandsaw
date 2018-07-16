@@ -1,0 +1,34 @@
+body {
+    padding-top: 3.5rem;
+}
+
+.small-text {
+    font-size: 0.4em;
+}
+
+.date-separator {
+    text-align: center;
+    color: #324D5C;
+    border-top: 1px solid rgba(0, 0, 0, .1);
+    border-bottom: 1px solid rgba(0, 0, 0, .1);
+    padding: 0.3em;
+    margin: 0.5em;
+    background-color: #ececec;
+}
+
+.show-table-artist {
+    width: 50%;
+}
+
+.show-table-stage {
+    width: 30%;
+}
+
+.show-table-time {
+    width: 20%;
+    text-align: right;
+}
+
+.profile-picture {
+    margin: 1em 2em 1em 1em;
+}

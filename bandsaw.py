@@ -110,6 +110,27 @@ class BandsawFrontend:
 
             return render_template("artists.html", artists=artists, length=length)
 
+        @self.app.route('/artists/create', methods=['GET', 'POST'])
+        def artists_create():
+            content = {
+                'added': False,
+                'error': False,
+            }
+
+            if request.method == 'POST':
+                cursor = g.db.cursor()
+
+                try:
+                    cursor.execute("INSERT INTO artists (name) VALUES (%s)", (request.form['name']))
+                    content['added'] = True
+
+                except pymysql.err.IntegrityError:
+                    content['error'] = "Cet artiste existe déjà"
+
+                content['name'] = request.form['name']
+
+            return render_template("artists_create.html", **content)
+
         @self.app.route('/events', methods=['GET'])
         def events():
             cursor = g.db.cursor()

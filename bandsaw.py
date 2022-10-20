@@ -1,17 +1,25 @@
 import pymysql
-from flask import Flask, request, redirect, url_for, render_template, abort, make_response
+from flask import Flask, request, redirect, url_for, render_template, abort, make_response, g
 from config import config
 
 class BandsawFrontend:
     def __init__(self):
-        self.db = pymysql.connect(config['db-server'], config['db-username'], config['db-password'], config['db-database'])
-
         self.app = Flask(__name__, static_url_path='/static')
 
     def register(self):
+        @self.app.before_request
+        def before_request_handler():
+            g.db = pymysql.connect(
+                host=config['db-server'],
+                user=config['db-username'],
+                password=config['db-password'],
+                database=config['db-database'],
+                autocommit=True
+            )
+
         @self.app.route('/users/<uid>/<name>', methods=['GET'])
         def user(uid, name):
-            cursor = self.db.cursor()
+            cursor = g.db.cursor()
 
             cursor.execute("""
                 SELECT e.name, e.location, a.name, ep.location, es.name,
@@ -57,7 +65,7 @@ class BandsawFrontend:
                 })
 
             contents['stats']['artists'] = len(artists)
-            self.db.commit()
+            g.db.commit()
 
             return render_template("user.html", **contents)
 
@@ -68,7 +76,7 @@ class BandsawFrontend:
 
         @self.app.route('/users', methods=['GET'])
         def users():
-            cursor = self.db.cursor()
+            cursor = g.db.cursor()
             cursor.execute("""SELECT id, username, realname FROM users""")
             users = []
 
@@ -86,7 +94,7 @@ class BandsawFrontend:
 
         @self.app.route('/artists', methods=['GET'])
         def artists():
-            cursor = self.db.cursor()
+            cursor = g.db.cursor()
             cursor.execute("""SELECT id, name FROM artists ORDER BY name""")
             artists = []
 
@@ -104,7 +112,7 @@ class BandsawFrontend:
 
         @self.app.route('/events', methods=['GET'])
         def events():
-            cursor = self.db.cursor()
+            cursor = g.db.cursor()
             cursor.execute("""
                 SELECT e.id, e.name, t.name, datein, dateout, location
                 FROM events e

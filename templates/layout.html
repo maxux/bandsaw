@@ -8,9 +8,11 @@
 
     <title>Concerts seen by </title>
 
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js" crossorigin="anonymous"></script>
 
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css" rel="stylesheet">
     <link href="/static/bandsaw.css" rel="stylesheet">
   </head>
 
@@ -29,8 +31,12 @@
             <a class="nav-link" href="/artists">Artistes</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/events">Evenements</a>
+            <a class="nav-link" href="/events">Evènements</a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/summary/1/2022">Summary 2022</a>
+          </li>
+
         </ul>
       </div>
     </nav>
@@ -48,6 +54,8 @@
       {% endblock %}
       </div>
     </main>
+
+    <hr>
 
     <footer class="container">
       <p>Made with Love by Maxux</p>

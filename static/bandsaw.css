@@ -32,3 +32,29 @@ body {
 .profile-picture {
     margin: 1em 2em 1em 1em;
 }
+
+#summary {
+    text-align: justify;
+}
+
+#summary h1 {
+    padding-top: 0.5em;
+    border-bottom: dashed 1px #2a5ba1;
+    margin-bottom: 0.5em;
+}
+
+#summary ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+#summary li {
+    display: inline;
+    white-space: nowrap;
+}
+
+#summary li+li::before {
+    content: "• ";
+}
+

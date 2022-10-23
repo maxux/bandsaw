@@ -1,5 +1,5 @@
 import pymysql
-from flask import Flask, request, redirect, url_for, render_template, abort, make_response, g
+from flask import Flask, request, redirect, url_for, render_template, abort, make_response, g, jsonify
 from config import config
 
 class BandsawFrontend:
@@ -16,6 +16,66 @@ class BandsawFrontend:
                 database=config['db-database'],
                 autocommit=True
             )
+
+        @self.app.route('/api/attach/<eid>/<aid>', methods=['GET'])
+        def attach_api(eid, aid):
+            dates = g.db.cursor()
+            dates.execute("""
+                SELECT datein, dateout FROM events WHERE id = %s
+            """, (eid))
+
+            moments = dates.fetchone()
+
+            cursor = g.db.cursor()
+            cursor.execute("""
+                INSERT INTO event_plays (event, artist, showstart, showend) VALUES (%s, %s, %s, %s)
+            """, (eid, aid, moments[0], moments[1]))
+
+            return jsonify({})
+
+        @self.app.route('/api/artists', methods=['GET'])
+        def artists_api():
+            terms = request.args['term']
+
+            cursor = g.db.cursor()
+            cursor.execute("""
+                SELECT id, name
+                FROM artists
+                WHERE name LIKE %s
+                ORDER BY name
+            """, '%' + terms + '%')
+
+            artists = []
+
+            data = cursor.fetchall()
+            for row in data:
+                artists.append({
+                    'value': row[0],
+                    'label': row[1],
+                })
+
+            return jsonify(artists)
+
+        @self.app.route('/api/attends/<eid>', methods=['GET'])
+        def attends_api(eid):
+            cursor = g.db.cursor()
+            cursor.execute("""
+                SELECT a.id, a.name
+                FROM artists a, event_plays e
+                WHERE e.artist = a.id
+                  AND e.event = %s
+            """, eid)
+
+            artists = []
+
+            data = cursor.fetchall()
+            for row in data:
+                artists.append({
+                    'value': row[0],
+                    'label': row[1],
+                })
+
+            return jsonify(artists)
 
         @self.app.route('/users/<uid>/<name>', methods=['GET'])
         def user(uid, name):
@@ -119,6 +179,7 @@ class BandsawFrontend:
 
             if request.method == 'POST':
                 cursor = g.db.cursor()
+                content['name'] = request.form['name']
 
                 try:
                     cursor.execute("INSERT INTO artists (name) VALUES (%s)", (request.form['name']))
@@ -127,7 +188,6 @@ class BandsawFrontend:
                 except pymysql.err.IntegrityError:
                     content['error'] = "Cet artiste existe déjà"
 
-                content['name'] = request.form['name']
 
             return render_template("artists_create.html", **content)
 
@@ -158,8 +218,149 @@ class BandsawFrontend:
 
             return render_template("events.html", events=events, length=length)
 
+        @self.app.route('/events/create', methods=['GET', 'POST'])
+        def events_create():
+            content = {
+                'added': False,
+                'error': False,
+                'types': {},
+            }
+
+            cursor = g.db.cursor()
+            cursor.execute("SELECT id, name FROM event_types ORDER BY id DESC")
+            data = cursor.fetchall()
+
+            for row in data:
+                content['types'][row[0]] = row[1]
+
+            if request.method == 'POST':
+                cursor = g.db.cursor()
+                content['name'] = request.form['name']
+
+                try:
+                    cursor.execute("""
+                        INSERT INTO events (name, type, location) VALUES (%s, %s, %s)
+
+                    """, (request.form['name'], request.form['type'], request.form['location']))
+
+                    content['added'] = True
+
+                except pymysql.err.IntegrityError:
+                    content['error'] = "Cet évènement existe déjà"
+                    return render_template("events_create.html", **content)
+
+                return redirect("/event/%s/new" % cursor.lastrowid)
+
+            return render_template("events_create.html", **content)
+
+        @self.app.route('/event/<id>/<name>', methods=['GET', 'POST'])
+        def events_details(id, name):
+            content = {
+                'added': False,
+                'error': False,
+                'types': {},
+            }
+
+            cursor = g.db.cursor()
+            cursor.execute("SELECT id, name FROM event_types ORDER BY id DESC")
+            data = cursor.fetchall()
+
+            for row in data:
+                content['types'][row[0]] = row[1]
+
+            cursor = g.db.cursor()
+            cursor.execute("""
+                SELECT e.id, e.name, t.id, t.name, datein, dateout, location
+                FROM events e
+                LEFT JOIN event_types t ON (t.id = e.type)
+                WHERE e.id = %s
+            """, id)
+
+            data = cursor.fetchone()
+            print(data)
+
+            content['id'] = data[0]
+            content['name'] = data[1]
+            content['type'] = data[2]
+            content['datein'] = data[4]
+            content['dateout'] = data[5]
+            content['location'] = data[6]
+
+            if request.method == 'POST':
+                cursor = g.db.cursor()
+                content['name'] = request.form['name']
+
+                cursor.execute("""
+                    UPDATE events SET name = %s, type = %s, location = %s, datein = %s, dateout = %s
+                    WHERE id = %s
+
+                """, (
+                    request.form['name'],
+                    request.form['type'],
+                    request.form['location'],
+                    request.form['datein'],
+                    request.form['dateout'],
+                    id)
+                )
+
+                return redirect("/event/%s/updated" % id)
 
 
+            return render_template("events_details.html", **content)
+
+        @self.app.route('/summary/<uid>/<year>', methods=['GET'])
+        def summary(uid, year):
+            cursor = g.db.cursor()
+
+            cursor.execute("""
+                SELECT e.name, e.location, a.name, ep.location, es.name,
+                       e.location, e.datein, ep.showstart, ep.showend, et.name
+                  FROM events e, artists a, event_types et, event_plays ep
+                  LEFT JOIN event_shows es ON (es.id = ep.showtype)
+                 WHERE ep.artist = a.id
+                   AND e.id = ep.event
+                   AND et.id = e.type
+                   AND YEAR(e.datein) = %s
+              ORDER BY e.datein ASC, ep.showstart ASC
+            """, (year))
+
+            data = cursor.fetchall()
+            event = None
+            artists = {}
+            contents = {
+                'year': year,
+                'evlist': [],
+                'stats': {
+                    'types': {},
+                    'artists': [],
+                },
+            }
+
+            for row in data:
+                print(row)
+
+                if row[0] != event:
+                    event = row[0]
+                    if row[9] not in contents['stats']['types']:
+                        contents['stats']['types'][row[9]] = []
+
+                    contents['stats']['types'][row[9]].append(event)
+                    contents['evlist'].append({
+                        'name': row[0],
+                        'location': row[5],
+                        'shows': [],
+                        'type': row[9],
+
+                    })
+
+                artists[row[2]] = True
+
+            contents['stats']['types']['Artiste'] = list(artists.keys())
+            contents['stats']['types']['Artiste'].sort()
+
+            print(contents)
+
+            return render_template("summary.html", **contents)
     def start(self):
         self.app.run(host="0.0.0.0", port=8001, debug=True, threaded=True)
 
